@@ -10,44 +10,49 @@ export default class Battle extends Component {
         {
           name: "Aragon",
           health: "200",
-          defense: "100",
+          defense: "25",
           attack: "100",
           img: images.aragorn,
           attacker: false,
-          defender: false
+          defender: false,
+          defeated: false
         },
         {
           name: "Gandalf",
           health: "200",
-          defense: "100",
+          defense: "25",
           attack: "100",
           img: images.gandalf,
           attacker: false,
-          defender: false
+          defender: false,
+          defeated: false
         },
         {
           name: "Sauron",
           health: "200",
-          defense: "100",
+          defense: "25",
           attack: "100",
           img: images.sauron,
           attacker: false,
-          defender: false
+          defender: false,
+          defeated: false
         },
         {
           name: "Witch King",
           health: "200",
-          defense: "100",
+          defense: "25",
           attack: "100",
           img: images.witchKing,
           attacker: false,
-          defender: false
+          defender: false,
+          defeated: false
         }
       ],
       attackerChoosen: false,
       defenderChoosen: false,
       attacker: [],
-      defender: []
+      defender: [],
+      defenderIndex: ""
     };
     this.selectAttacker = this.selectAttacker.bind(this);
     this.selectDefender = this.selectDefender.bind(this);
@@ -71,6 +76,7 @@ export default class Battle extends Component {
   }
 
   selectDefender(i) {
+    console.log(i);
     if (
       this.state.characters.some(x => {
         return x.defender;
@@ -83,21 +89,47 @@ export default class Battle extends Component {
     this.setState({
       characters: charactersCopy,
       defenderChoosen: true,
-      defender: charactersCopy[i]
+      defender: charactersCopy[i],
+      defenderIndex: i
     });
   }
 
   attack() {
-    let attack = this.state.attacker.attack;
-    let health = this.state.defender.health;
-    let charactersCopy = JSON.parse(JSON.stringify(this.state.defender));
-    charactersCopy.health = health - attack;
+    const { attacker, defender } = this.state;
+
+    let attackerAttack = attacker.attack;
+    let attackerHealth = attacker.health;
+    let defenderDefense = defender.defense;
+    let defenderHealth = defender.health;
+
+    let defenderCopy = JSON.parse(JSON.stringify(defender));
+    defenderCopy.health = defenderHealth - attackerAttack;
+
+    let attackerCopy = JSON.parse(JSON.stringify(attacker));
+    attackerCopy.health = attackerHealth - defenderDefense;
+
     this.setState({
-      defender: charactersCopy
+      defender: defenderCopy,
+      attacker: attackerCopy
     });
-    if (this.state.attacker.health <= 0 || this.state.defender.health <= 0) {
-      alert("dead");
+    this.checkScore();
+  }
+
+  checkScore() {
+    if (this.state.defender.health <= 0) {
+      this.defenderDefeated();
     }
+  }
+
+  defenderDefeated() {
+    let charactersCopy = JSON.parse(JSON.stringify(this.state.characters));
+    charactersCopy[this.state.defenderIndex].defender = false;
+    charactersCopy[this.state.defenderIndex].defeated = true;
+    this.setState({
+      defender: [],
+      defenderChoosen: false,
+      characters: charactersCopy
+    });
   }
 
   render() {
@@ -115,7 +147,8 @@ export default class Battle extends Component {
           {characters.map(
             (x, i) =>
               !x.attacker &&
-              !x.defender && (
+              !x.defender &&
+              !x.defeated && (
                 <div key={i}>
                   <Playercard
                     name={x.name}
@@ -148,7 +181,12 @@ export default class Battle extends Component {
           )}
         </div>
         {attackerChoosen && defenderChoosen ? (
-          <button onClick={() => this.attack()}>Attack</button>
+          <button
+            onClick={() => this.attack()}
+            onMouseUp={() => this.checkScore()}
+          >
+            Attack
+          </button>
         ) : (
           <h3>Select Attacker and Defender</h3>
         )}
